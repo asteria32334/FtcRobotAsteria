@@ -17,6 +17,12 @@ public class Odometry {
         pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
+        // POD ların robotun merkezine göre konumu
+        double xOffsetMM = -180;   // Örn: Merkezden 15 mm öndeyse (+), arkadaysa (-)
+        double yOffsetMM = -40;  // Örn: Merkezden 25 mm sağdaysa (-), soldaysa (+)
+
+        pinpoint.setOffsets(xOffsetMM, yOffsetMM, DistanceUnit.MM);
+
         // Başlangıçta pozisyonu sıfırla
         pinpoint.resetPosAndIMU();
     }

@@ -107,4 +107,10 @@ public class Turret {
     public int getCurrentPosition() {
         return turretMotor.getCurrentPosition();
     }
+
+    public void emergencyStop() {
+        turretMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        turretMotor.setPower(0.0);
+    }
 }
