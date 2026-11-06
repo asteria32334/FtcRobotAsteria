@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.general.mechanisms.AprilTagWebcam;
+import org.firstinspires.ftc.teamcode.general.mechanisms.IntakeAndTransfer;
 import org.firstinspires.ftc.teamcode.general.mechanisms.MecanumDrive;
 import org.firstinspires.ftc.teamcode.general.mechanisms.Odometry;
 import org.firstinspires.ftc.teamcode.general.mechanisms.Turret;
@@ -16,6 +17,7 @@ public class kirmiziTeleOp extends OpMode {
     MecanumDrive drive = new MecanumDrive();
     private Turret turret;
     private Odometry odometry;
+    private IntakeAndTransfer intakeAndTransfer;
 
     // Joystick değişkenleri
     double forward, strafe, rotate;
@@ -29,6 +31,8 @@ public class kirmiziTeleOp extends OpMode {
 
         turret = new Turret(hardwareMap);
         odometry = new Odometry(hardwareMap);
+        //intake ve transfer çağırımı
+        intakeAndTransfer = new IntakeAndTransfer(hardwareMap);
 
         // Kırmızı ittifak başlangıç pozisyonunu buraya girebilirsin (Örn: X=15, Y=60, Açı=0)
         // odometry.setStartingPose(15.0, 60.0, 0.0);
@@ -73,6 +77,10 @@ public class kirmiziTeleOp extends OpMode {
         if (gamepad1.a) {
             odometry.setStartingPose(15.0, 60.0, 0.0);
         }
+
+        intakeAndTransfer.intakeAndTransfer(forward > 0, gamepad1.b);
+
+
 
         telemetry.addData("Odometry X", "%.2f", robotX);
         telemetry.addData("Odometry Y", "%.2f", robotY);
