@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.general.mechanisms.AprilTagWebcam;
 import org.firstinspires.ftc.teamcode.general.mechanisms.Flywheel;
 import org.firstinspires.ftc.teamcode.general.mechanisms.IntakeAndTransfer;
+import org.firstinspires.ftc.teamcode.general.mechanisms.LiftAndGrip;
 import org.firstinspires.ftc.teamcode.general.mechanisms.MecanumDrive;
 import org.firstinspires.ftc.teamcode.general.mechanisms.Odometry;
 import org.firstinspires.ftc.teamcode.general.mechanisms.Turret;
@@ -20,10 +21,13 @@ public class maviTeleOp extends OpMode {
     private Odometry odometry; // odometri yi mekanizmalardan çekme satırı
     private IntakeAndTransfer intakeAndTransfer; // intake ve transfer i mekanizmalardan çekme satırı
     private Flywheel updateFlywheel; // flywheel ı mekanizmalardan çekme satırı
+    private LiftAndGrip liftAndGrip;
 
     // Joystick değişkenleri
     double forward, strafe, rotate; // mekanum değişkenlerini importlama
     boolean isEmergencyStopped = false; // TURRET için acil durdurma kontrol değişkeni
+    int stateLift = 0;
+    boolean flowerRamp = false;
 
     @Override
     public void init() {
@@ -37,6 +41,7 @@ public class maviTeleOp extends OpMode {
         //intake ve transfer çağırımı
         intakeAndTransfer = new IntakeAndTransfer(hardwareMap); // intake ve transfer motor verileri verme
         updateFlywheel = new Flywheel(hardwareMap); // FLYWHEEL motor verileri verme
+        liftAndGrip = new LiftAndGrip(hardwareMap);
 
         // Kırmızı ittifak başlangıç pozisyonunu buraya girebilirsin (Örn: X=15, Y=60, Açı=0)
         // odometry.setStartingPose(15.0, 60.0, 0.0);
@@ -76,12 +81,18 @@ public class maviTeleOp extends OpMode {
         double robotY = odometry.getY();
         double robotHeading = odometry.getHeading();
 
-        if (gamepad1.left_bumper) {
+        if (gamepad1.startWasReleased()) {
             odometry.setStartingPose(7.87, 7.65, 0.0);
         }
 
+        if (gamepad1.left_bumper){
+            flowerRamp = true;
+        } else {
+            flowerRamp = false;
+        }
+
         // INTAKE in ne zaman çalışacağını ve transferin ne zaman çalışacağını komutlama
-        intakeAndTransfer.intakeAndTransfer(forward > 0 || gamepad1.left_trigger > 0, gamepad1.right_bumper);
+        intakeAndTransfer.intakeAndTransfer(forward > 0 || gamepad1.left_trigger > 0, gamepad1.right_bumper, gamepad1.left_bumper);
 
         // FLYWHEEL tuş ataması
         if (gamepad1.right_trigger > 0) {
@@ -96,7 +107,7 @@ public class maviTeleOp extends OpMode {
         turret.updateAim(robotX, robotY, robotHeading, Turret.Alliance.BLUE);
 
         // TURRET acil konum kitleme tuş ve basılmışlık kontrolü ataması
-        if (gamepad1.aWasReleased()) {
+        if (gamepad1.bWasReleased()) {
             isEmergencyStopped = !isEmergencyStopped;
         }
         // TURRET emergency stop durumunda konumu kontrolü
@@ -104,6 +115,23 @@ public class maviTeleOp extends OpMode {
             // TURRET acil stop komutu ve telemetri verisi
             turret.emergencyStop();
             telemetry.addData("TURRET KİLİTLENDİ:","Acil DURUM, turret bir nedenle kilitlendi","");
+        }
+
+        //LIFT için veri göndferimi
+        if (gamepad1.aWasReleased()){ // a ya basılmış mı kontrolü
+            if (!flowerRamp){
+                stateLift += 1; // state i değiştirme
+                liftAndGrip.setLiftTargetPosition(stateLift); // state i aktarma
+            }
+
+            if (stateLift >= 6){ // state i maksimum state e kontrol etme
+                stateLift = 0; // maksimum state olduğunda sıfırlama
+            }
+        }
+
+        if (gamepad1.xWasReleased()){
+            stateLift = 0;
+            liftAndGrip.setLiftTargetPosition(stateLift); // state i aktarma
         }
 
         // telemetri verileri
