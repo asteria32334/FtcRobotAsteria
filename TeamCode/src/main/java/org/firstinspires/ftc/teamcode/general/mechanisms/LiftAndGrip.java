@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.general.mechanisms;
 
+import com.qualcomm.hardware.dfrobot.HuskyLens;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -8,6 +9,7 @@ public class LiftAndGrip {
     private DcMotor liftMotor;
     private Servo gripper;
     private Servo rotateGripper;
+    private HuskyLens huskylens;
     public static final int LIFT_MAX_HEIGHT = 2500; // Encoder tık sayısı
     public static final int LIFT_MIN_HEIGHT = 0;
 
@@ -31,6 +33,9 @@ public class LiftAndGrip {
         gripper = hardwareMap.get(Servo.class, "gripper");
         rotateGripper = hardwareMap.get(Servo.class, "gripper_rotate");
 
+        huskylens = hardwareMap.get(HuskyLens.class, "huskylens");
+        huskylens.selectAlgorithm(HuskyLens.Algorithm.COLOR_RECOGNITION);
+
         // Genellikle çift servolu kıskaçlarda biri ters yöne dönmelidir ki simetrik sıksınlar:
         //rotateGripper.setDirection(Servo.Direction.REVERSE);
         //gripper.setDirection(Servo.Direction.REVERSE);
@@ -45,6 +50,27 @@ public class LiftAndGrip {
     public void setLiftTargetPosition(int state) {
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         liftMotor.setPower(0.8);
+
+        HuskyLens.Block[] blocks = huskylens.blocks();
+        int detectedID = 0;
+        if (blocks.length > 0){
+            int screenCenterX = 320 / 2; // HuskyLens yatay çözünürlük merkezi (genelde 160)
+            int closestBlockID = blocks[0].id;
+            int minDistance = Math.abs(blocks[0].x - screenCenterX);
+
+            // Görüş alanındaki tüm blokları tara, merkeze en yakın olanı seç
+            for (int i = 1; i < blocks.length; i++) {
+                int distance = Math.abs(blocks[i].x - screenCenterX);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestBlockID = blocks[i].id; // Merkeze en yakın olanın ID'si
+                }
+            }
+
+            // Bulunan en yakın nesne ID'sine göre pozisyonu ayarla
+            detectedID = closestBlockID;
+        }
+
         if (state == 0){ // kapalı bekleme pozisyonu
             liftMotor.setTargetPosition(LIFT_MIN_HEIGHT);
             gripper.setPosition(GRIPPER_OPEN);
@@ -57,18 +83,19 @@ public class LiftAndGrip {
         }
         else if (state == 2){ // açık NEKTAR kıstırma
             liftMotor.setTargetPosition(LIFT_MIN_HEIGHT);
-            gripper.setPosition(GRIPPER_NECTAR);
             rotateGripper.setPosition(GRIPPER_ROTATE_GRIP);
+            if (detectedID == 1){
+                gripper.setPosition(GRIPPER_POLLEN);
+            }
+            else if (detectedID == 2 || detectedID == 3){
+                gripper.setPosition(GRIPPER_NECTAR);
+            }
+
         }
-        else if (state == 3){// açık POLEN kıstırma
-            liftMotor.setTargetPosition(LIFT_MIN_HEIGHT);
-            gripper.setPosition(GRIPPER_POLLEN);
-            rotateGripper.setPosition(GRIPPER_ROTATE_GRIP);
-        }
-        else if (state == 4){// yukarıya taşıma
+        else if (state == 3){// yukarıya taşıma
             liftMotor.setTargetPosition(LIFT_MAX_HEIGHT);
         }
-        else if (state == 5){// yukarıa topu bırakma
+        else if (state == 4){// yukarıa topu bırakma
             liftMotor.setTargetPosition(LIFT_MAX_HEIGHT);
             gripper.setPosition(GRIPPER_OPEN);
             rotateGripper.setPosition(GRIPPER_ROTATE_GRIP);

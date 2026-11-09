@@ -124,7 +124,7 @@ public class kirmiziTeleOp extends OpMode {
                 liftAndGrip.setLiftTargetPosition(stateLift); // state i aktarma
             }
 
-            if (stateLift >= 6){ // state i maksimum state e kontrol etme
+            if (stateLift >= 5){ // state i maksimum state e kontrol etme
                 stateLift = 0; // maksimum state olduğunda sıfırlama
             }
         }
