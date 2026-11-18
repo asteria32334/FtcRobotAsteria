@@ -1,14 +1,20 @@
 package org.firstinspires.ftc.teamcode.general.mechanisms;
 
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class Turret {
     private DcMotor turretMotor;
+    private Limelight3A limelight;
 
-    private static final double TICKS_PER_DEGREE = 1.2133; // Dişli oranınız
+    private static final double TICKS_PER_DEGREE = 4.0; // Dişli oranınız
     private static final double MIN_ANGLE = -90.0; // saat yönünün tersi -
     private static final double MAX_ANGLE = 90.0; // saat yönü +
+
+    private double visionCorrectionOffset = 0.0;
 
     public enum Alliance {
         RED,
@@ -38,6 +44,10 @@ public class Turret {
         turretMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         turretMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         turretMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight.start();
+        limelight.pipelineSwitch(0);
     }
 
     /**
@@ -45,7 +55,7 @@ public class Turret {
      * Robotun X ve Y konumuna bakar, Y 70.75'i geçti mi diye kontrol eder,
      * ittifak rengine göre doğru hedefi seçip kilitlenir.
      */
-    public void updateAim(double robotX, double robotY, double robotHeadingDeg, Alliance alliance) {
+    public void updateAim(double robotX, double robotY, double robotHeadingDeg, Alliance alliance, boolean limelightTurretUpdate) {
         double targetX;
         double targetY;
 
@@ -54,17 +64,37 @@ public class Turret {
             if (robotY < Y_THRESHOLD) {
                 targetX = RED_TARGET_1_X;
                 targetY = RED_TARGET_1_Y;
+                limelight.pipelineSwitch(1);
             } else {
                 targetX = RED_TARGET_2_X;
                 targetY = RED_TARGET_2_Y;
+                limelight.pipelineSwitch(2);
             }
         } else { // BLUE
             if (robotY < Y_THRESHOLD) {
                 targetX = BLUE_TARGET_1_X;
                 targetY = BLUE_TARGET_1_Y;
+                limelight.pipelineSwitch(3);
             } else {
                 targetX = BLUE_TARGET_2_X;
                 targetY = BLUE_TARGET_2_Y;
+                limelight.pipelineSwitch(4);
+            }
+        }
+
+        if (limelightTurretUpdate) {
+            LLResult result = limelight.getLatestResult();
+            if (result != null && result.isValid()) {
+                for (LLResultTypes.FiducialResult fiducial : result.getFiducialResults()) {
+                    if (fiducial.getFiducialId() == 11) { // Hedef ID 11 ise
+                        double tx = fiducial.getTargetXDegrees(); // Kameradaki anlık sapma
+
+                        // O an odometrinin hesapladığı tahmini açı ile gerçek tx arasındaki farkı
+                        // kalibrasyon offset'i olarak kaydediyoruz.
+                        visionCorrectionOffset += tx;
+                        break;
+                    }
+                }
             }
         }
 
@@ -73,7 +103,7 @@ public class Turret {
         double deltaY = targetY - robotY;
         double globalAngleToTarget = Math.toDegrees(Math.atan2(deltaY, deltaX));
 
-        double turretTargetAngle = globalAngleToTarget - robotHeadingDeg;
+        double turretTargetAngle = (globalAngleToTarget - robotHeadingDeg) + visionCorrectionOffset;
         turretTargetAngle = normalizeAngle(turretTargetAngle);
 
         // --- GÜVENLİK VE 0'A DÖNÜP TAKİBE DEVAM ETME MANTIĞI ---

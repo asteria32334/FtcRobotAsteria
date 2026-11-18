@@ -8,7 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class IntakeAndTransfer {
     private DcMotor intakeDcMotor;
     private DcMotor transferDcMotor;
-    private Servo flowerServo;
+    private Servo flowerServoLeft;
+    private Servo flowerServoRight;
 
     public IntakeAndTransfer(HardwareMap hardwareMap) {
         intakeDcMotor = hardwareMap.get(DcMotor.class, "intake");
@@ -21,8 +22,11 @@ public class IntakeAndTransfer {
         transferDcMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         transferDcMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        flowerServo = hardwareMap.get(Servo.class, "intake_rampa");
-        flowerServo.setDirection(Servo.Direction.REVERSE);
+        flowerServoLeft = hardwareMap.get(Servo.class, "intake_rampa_sol");
+        flowerServoLeft.setDirection(Servo.Direction.REVERSE);
+
+        flowerServoRight = hardwareMap.get(Servo.class, "intake_rampa_sag");
+        //flowerServoRight.setDirection(Servo.Direction.REVERSE);
     }
 
     public void intakeAndTransfer(boolean intake, boolean transfer, boolean rampa) {
@@ -42,10 +46,12 @@ public class IntakeAndTransfer {
         }
 
         if (rampa) {
-            flowerServo.setPosition(0.46);
+            flowerServoLeft.setPosition(0.46);
+            flowerServoRight.setPosition(0.46);
         }
         else {
-            flowerServo.setPosition(0);
+            flowerServoLeft.setPosition(0);
+            flowerServoRight.setPosition(0);
         }
     }
 }

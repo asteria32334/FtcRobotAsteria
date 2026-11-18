@@ -103,9 +103,6 @@ public class kirmiziTeleOp extends OpMode {
             updateFlywheel.stop();
         }
 
-        // TURRET robot konumu ve ittifak rengi verisi verme
-        turret.updateAim(robotX, robotY, robotHeading, Turret.Alliance.RED);
-
         // TURRET acil konum kitleme tuş ve basılmışlık kontrolü ataması
         if (gamepad1.bWasReleased()) {
             isEmergencyStopped = !isEmergencyStopped;
@@ -116,9 +113,13 @@ public class kirmiziTeleOp extends OpMode {
             turret.emergencyStop();
             telemetry.addData("TURRET KİLİTLENDİ:","Acil DURUM, turret bir nedenle kilitlendi","");
         }
+        else {
+            // TURRET robot konumu, ittifak rengi ve limelight ile turret açı sağlaması verisi verme
+            turret.updateAim(robotX, robotY, robotHeading, Turret.Alliance.RED, gamepad1.aWasReleased());
+        }
 
         //LIFT için veri göndferimi
-        if (gamepad1.aWasReleased()){ // a ya basılmış mı kontrolü
+        if (gamepad1.yWasReleased()){ // a ya basılmış mı kontrolü
             if (!flowerRamp){
                 stateLift += 1; // state i değiştirme
                 liftAndGrip.setLiftTargetPosition(stateLift); // state i aktarma
