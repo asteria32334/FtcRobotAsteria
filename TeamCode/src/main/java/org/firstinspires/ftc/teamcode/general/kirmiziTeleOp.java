@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.general;
 
+import com.pedropathing.follower.Follower;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -10,6 +12,7 @@ import org.firstinspires.ftc.teamcode.general.mechanisms.LiftAndGrip;
 import org.firstinspires.ftc.teamcode.general.mechanisms.MecanumDrive;
 import org.firstinspires.ftc.teamcode.general.mechanisms.Odometry;
 import org.firstinspires.ftc.teamcode.general.mechanisms.Turret;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 
 @TeleOp
@@ -28,9 +31,12 @@ public class kirmiziTeleOp extends OpMode {
     boolean isEmergencyStopped = false; // TURRET için acil durdurma kontrol değişkeni
     int stateLift = 0;
     boolean flowerRamp = false;
+    private Follower follower;
 
     @Override
     public void init() {
+        follower = Constants.create(hardwareMap);
+
         drive.init(hardwareMap); // mekanum motor verileri verme
         aprilTagWebcam.init(hardwareMap, telemetry); // webcam başlangıç ayarı verme
         telemetry.addData("Durum", "Başlatmaya Hazır"); // telemetri bilgisi verme
@@ -52,6 +58,9 @@ public class kirmiziTeleOp extends OpMode {
 
     @Override
     public void loop() {
+        follower.update();
+        Pose robotPose = follower.pose(); // returns a Pose object
+
         // Sürüş kontrolü
         forward = -gamepad1.right_stick_y; // mekanum ileri-geri verisi verme
         strafe = gamepad1.right_stick_x; // mekanum yanal (sağ-sol) verisi verme
@@ -77,12 +86,14 @@ public class kirmiziTeleOp extends OpMode {
         // TURRET
         // ODOMETRİ
         odometry.update();
-        double robotX = odometry.getX();
-        double robotY = odometry.getY();
-        double robotHeading = odometry.getHeading();
+        double robotX = robotPose.x();
+        double robotY = robotPose.y();
+        double robotHeading = Math.toDegrees(robotPose.heading());
 
         if (gamepad1.startWasReleased()) {
-            odometry.setStartingPose(7.87, 7.65, 0.0);
+            odometry.setStartingPose(7.87, 7.65, 90.0);
+            Pose cornerPose = new Pose(7.87, 7.65, Math.toRadians(90.0));
+            follower.setPose(cornerPose);
         }
 
         if (gamepad1.left_bumper){
