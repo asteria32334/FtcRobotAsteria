@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.general.mechanisms.IntakeAndTransfer;
 import org.firstinspires.ftc.teamcode.general.mechanisms.LiftAndGrip;
 import org.firstinspires.ftc.teamcode.general.mechanisms.MecanumDrive;
 import org.firstinspires.ftc.teamcode.general.mechanisms.Odometry;
+import org.firstinspires.ftc.teamcode.general.mechanisms.OpModeStorage;
 import org.firstinspires.ftc.teamcode.general.mechanisms.Turret;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -36,6 +37,8 @@ public class kirmiziTeleOp extends OpMode {
     @Override
     public void init() {
         follower = Constants.create(hardwareMap);
+        follower.setPose(OpModeStorage.autonomousEndPose);
+        follower.update();
 
         drive.init(hardwareMap); // mekanum motor verileri verme
         aprilTagWebcam.init(hardwareMap, telemetry); // webcam başlangıç ayarı verme
